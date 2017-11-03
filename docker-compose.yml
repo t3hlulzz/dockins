@@ -1,7 +1,9 @@
 version: '3'
 services:
   jenkins-master:
-    build: jenkins-master
+    image: docj_jenkins-master
+    container_name: jenkins-master
+    #build: jenkins-master
     user: root
     ports:
       - "8080:8080"
@@ -11,9 +13,28 @@ services:
       - "/var/jenkins_home:/var/jenkins_home"
 
   artifactory:
-    container_name: artifactory_named
+    container_name: artifactory
     image: docker.bintray.io/jfrog/artifactory-pro:latest
     ports:
       - "8081:8081"
     volumes:
       - "/var/opt/jfrog/artifactory:/var/opt/jfrog/artifactory"
+
+  nginx:
+    container_name: nginx-artifactory
+    image: docker.bintray.io/jfrog/nginx-artifactory-pro:5.5.2
+    ports:
+      - "80:80"
+      - "443:443"
+    # depends_on:
+    #  - "artifactory_named"
+    # links:
+    #  - "artifactory_named:artifactory"
+    volumes:
+      - "/data/nginx:/var/opt/jfrog/nginx"
+    environment:
+     - "ART_BASE_URL=http://artifactory:8081/artifactory"
+     - "SSL=true"
+
+  # sonarqube:
+  #   container_name: sonar
