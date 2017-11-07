@@ -3,6 +3,8 @@ services:
   jenkins-master:
     image: docj_jenkins-master
     container_name: jenkins-master
+    #domainname: gd.com
+    hostname: jenkins-master
     #build: jenkins-master
     user: root
     ports:
@@ -11,33 +13,46 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/var/jenkins_home:/var/jenkins_home"
+    network_mode: "bridge"
 
   artifactory:
     container_name: artifactory
     image: docker.bintray.io/jfrog/artifactory-pro:latest
+    #domainname: gd.com
+    hostname: artifactory
     ports:
       - "8081:8081"
-      - "5000:5000"
-      - "5001:5001"
-      - "5002:5002"
+      # - "5000:5000"
+      # - "5001:5001"
+      # - "5002:5002"
     volumes:
       - "/var/opt/jfrog/artifactory:/var/opt/jfrog/artifactory"
+    network_mode: "bridge"
+    depends_on:
+      - jenkins-master
 
   nginx:
     container_name: nginx-artifactory
-    image: docker.bintray.io/jfrog/nginx-artifactory-pro:5.5.2
+    image: docker.bintray.io/jfrog/nginx-artifactory-pro:5.5.2 #nginx:latest
+    #domainname: gd.com
+    hostname: lb
     ports:
       - "80:80"
       - "443:443"
-    # depends_on:
-    #  - "artifactory_named"
-    # links:
-    #  - "artifactory_named:artifactory"
+      - "5000:5000"
+      - "5001:5001"
+      - "5002:5002"
+    network_mode: "bridge"
+    depends_on:
+     - "artifactory"
+    links:
+     - "artifactory"
     volumes:
       - "/data/nginx:/var/opt/jfrog/nginx"
+      #- "/home/breathedeep/jenkins_wm/artifactory.conf:/etc/nginx/conf.d/artifactory.conf:ro"
     environment:
-     - "ART_BASE_URL=http://artifactory:8081/artifactory"
-     - "SSL=true"
+      - "ART_BASE_URL=http://artifactory:8081/artifactory"
+    #   - "SSL=false"
 
   # sonarqube:
   #   container_name: sonar
